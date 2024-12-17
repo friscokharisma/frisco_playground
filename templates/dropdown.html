@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Non-Floating Div Dropdown</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+
+        /* Dropdown container */
+        .dropdown {
+            display: inline-block;
+            width: 300px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+
+        /* Dropdown button */
+        .dropdown button {
+            width: 100%;
+            padding: 10px;
+            font-size: 16px;
+            cursor: pointer;
+            background-color: #007BFF;
+            color: white;
+            border: none;
+            border-radius: 4px;
+        }
+
+        /* Content inside the dropdown */
+        .dropdown-content {
+            display: none;
+            padding: 10px;
+            background-color: #f9f9f9;
+            border-top: 1px solid #ddd;
+            border-radius: 0 0 4px 4px;
+        }
+
+        /* Toggle display when the dropdown is active */
+        .dropdown.active .dropdown-content {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="dropdown">
+        <button id="dropdownButton">Click to Toggle Content ▼</button>
+        <div class="dropdown-content">
+            <p>This is some hidden content that appears when the dropdown is active.</p>
+            <ul>
+                <li>Item 1</li>
+                <li>Item 2</li>
+                <li>Item 3</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        // Get the dropdown button and container
+        const dropdownButton = document.getElementById('dropdownButton');
+        const dropdown = document.querySelector('.dropdown');
+
+        // Toggle the "active" class on click
+        dropdownButton.addEventListener('click', () => {
+            dropdown.classList.toggle('active');
+        });
+
+        // Close the dropdown if clicking outside of it
+        document.addEventListener('click', (event) => {
+            if (!dropdown.contains(event.target)) {
+                dropdown.classList.remove('active');
+            }
+        });
+    </script>
+</body>
+</html>

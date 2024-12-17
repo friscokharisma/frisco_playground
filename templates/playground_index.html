@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Items List</title>
+    <link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Inconsolata">
+    <style>
+        html {
+            height: 100%;
+            font-family: "Inconsolata", sans-serif;
+        }
+        
+        body {
+            padding-top: 50px; /*fixing issue h1 item list not visible*/
+            height: 100%;
+            font-family: "Inconsolata", sans-serif;
+        }
+
+        .content-wrapper {
+            width: 80%;
+            margin: 0 auto;
+            margin-top: 50px;
+        }
+
+        .create-button-container {
+            display: flex;
+            justify-content: flex-start;
+            margin-bottom: 10px;
+        }
+
+        .table-content {
+            display: flex;
+            justify-content: center;
+            /* align-items: center;
+            min-height: 100vh;  */
+            /* margin-top: 50px; */
+        }
+
+        table {
+            border-collapse: collapse;
+            width: 100%; /* Optional: Adjust table width */
+            text-align: center; /* Center-align text inside table cells */
+        }
+
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+        }
+
+        th {
+            background-color: #f4f4f4;
+        }
+    </style>
+</head>
+<body>
+
+<!-- Navigation Links -->
+<div class="w3-top">
+    <div class="w3-row w3-padding w3-black">
+        <div class="w3-col s3">
+            <a href="/" class="w3-button w3-block w3-black">HOME</a>
+        </div>
+        <div class="w3-col s3">
+            <a href="/playground" class="w3-button w3-block w3-black">PLAYGROUND</a>
+        </div>
+        <div class="w3-col s3">
+            <a href="/script_list" class="w3-button w3-block w3-black">SCRIPT</a>
+        </div>
+    </div>
+</div>
+
+<!-- Main Content -->
+<div class="w3-container">
+    <h1 style="text-align: center;">Items List</h1> <!-- Centered heading -->
+
+    <div class="content-wrapper">
+        <div class="create-button-container">
+            <a href="" class="w3-button w3-dark-grey">Create data</a>
+        </div>
+        <div class="table-content">
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Name</th>
+                        <th>Description</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in items %}
+                    <tr>
+                        <td>{{ item.id }}</td>
+                        <td>{{ item.name }}</td>
+                        <td>{{ item.description }}</td>
+                        <td>
+                            <a href="/item/{{ item.id }}" class="w3-button w3-blue">Detail</a> <!-- View details -->
+                            <a href="/update_item/{{ item.id }}" class="w3-button w3-green">Update</a> <!-- Update item -->
+                            <!-- <a href="/delete_item/{{ item.id }}" class="w3-button w3-red" onclick="return confirm('Are you sure?');">Delete</a> Delete item -->
+                            <button onclick="deleteItem('{{ item.id }}')" class="w3-button w3-red">Delete</button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <h6>Endpoint List</h6>
+        <div class="w3-panel w3-leftbar w3-light-grey">
+            <p>Get list items : /items</p>
+            <p><i>-</i></p>
+            <p>Get detail item : /item/:id</p>
+            <p><i>id</i></p>
+            <p>Create item : /create_item</p>
+            <p><i>{"name": "Testing", "description": "Testing"}</i></p>
+            <p>Update item : /update_item/:id</p>
+            <p><i>id<br>{"name": "Testing", "description": "Testing"}</i></p>
+            <p>Delete item : /delete_item/:id</p>
+            <p><i>id</i></p>
+        </div>
+    </div>
+
+</div>
+
+<!-- End page content -->
+<script>
+    // Tabbed Menu (if needed)
+    function openMenu(evt, menuName) {
+        var i, x, tablinks;
+        x = document.getElementsByClassName("menu");
+        for (i = 0; i < x.length; i++) {
+            x[i].style.display = "none";
+        }
+        tablinks = document.getElementsByClassName("tablink");
+        for (i = 0; i < x.length; i++) {
+            tablinks[i].className = tablinks[i].className.replace(" w3-dark-grey", "");
+        }
+        document.getElementById(menuName).style.display = "block";
+        evt.currentTarget.firstElementChild.className += " w3-dark-grey";
+    }
+    document.getElementById("myLink").click();
+
+    function deleteItem(itemId) {
+    if (confirm('Are you sure you want to delete this item?')) {
+        fetch(`/delete_item/${itemId}`, {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => {
+            if (response.ok) {
+                alert('Item deleted successfully');
+                window.location.reload(); // Reload page after successful delete
+            } else {
+                alert('Failed to delete the item');
+            }
+        })
+        .catch(error => console.error('Error:', error));
+    }
+}
+
+</script>
+
+</body>
+</html>

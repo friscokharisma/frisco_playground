@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Single Page CRUD</title>
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            const apiUrl = '/api/items';
+            const itemList = document.getElementById("item-list");
+            const createForm = document.getElementById("create-form");
+            const updateForm = document.getElementById("update-form");
+            const detailSection = document.getElementById("item-detail");
+            
+            // Fetch and display items
+            function loadItems() {
+                fetch(apiUrl)
+                    .then(response => response.json())
+                    .then(data => {
+                        itemList.innerHTML = data.map(item => `
+                            <tr>
+                                <td>${item.id}</td>
+                                <td>${item.name}</td>
+                                <td>${item.description}</td>
+                                <td>
+                                    <button onclick="showDetail(${item.id})">View</button>
+                                    <button onclick="deleteItem(${item.id})">Delete</button>
+                                    <button onclick="showUpdateForm(${item.id})">Update</button>
+                                </td>
+                            </tr>
+                        `).join('');
+                    });
+            }
+
+            // Create item
+            createForm.addEventListener("submit", event => {
+                event.preventDefault();
+                const formData = new FormData(createForm);
+                const data = Object.fromEntries(formData.entries());
+                fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                }).then(() => {
+                    createForm.reset();
+                    loadItems();
+                });
+            });
+
+            // Delete item
+            window.deleteItem = (id) => {
+                fetch(`${apiUrl}/${id}`, { method: 'DELETE' })
+                    .then(() => loadItems());
+            };
+
+            // Show item detail
+            window.showDetail = (id) => {
+                fetch(`${apiUrl}/${id}`)
+                    .then(response => response.json())
+                    .then(item => {
+                        detailSection.innerHTML = `
+                            <h3>Item Detail</h3>
+                            <p><strong>ID:</strong> ${item.id}</p>
+                            <p><strong>Name:</strong> ${item.name}</p>
+                            <p><strong>Description:</strong> ${item.description}</p>
+                        `;
+                    });
+            };
+
+            // Show update form with item details
+            window.showUpdateForm = (id) => {
+                fetch(`${apiUrl}/${id}`)
+                    .then(response => response.json())
+                    .then(item => {
+                        updateForm.querySelector("[name='id']").value = item.id;
+                        updateForm.querySelector("[name='name']").value = item.name;
+                        updateForm.querySelector("[name='description']").value = item.description;
+                        updateForm.style.display = 'block';
+                    });
+            };
+
+            // Update item
+            updateForm.addEventListener("submit", event => {
+                event.preventDefault();
+                const id = updateForm.querySelector("[name='id']").value;
+                const formData = new FormData(updateForm);
+                const data = Object.fromEntries(formData.entries());
+                fetch(`${apiUrl}/${id}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                }).then(() => {
+                    updateForm.reset();
+                    updateForm.style.display = 'none';
+                    loadItems();
+                });
+            });
+
+            // Load items on page load
+            loadItems();
+        });
+    </script>
+</head>
+<body>
+    <h1>Single Page CRUD</h1>
+    <section>
+        <h2>Create Item</h2>
+        <form id="create-form">
+            <input type="text" name="name" placeholder="Name" required>
+            <input type="text" name="description" placeholder="Description" required>
+            <button type="submit">Create</button>
+        </form>
+    </section>
+    <section>
+        <h2>Items List</h2>
+        <table border="1">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Name</th>
+                    <th>Description</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="item-list"></tbody>
+        </table>
+    </section>
+    <section>
+        <div id="item-detail"></div>
+    </section>
+    <section>
+        <h2>Update Item</h2>
+        <form id="update-form" style="display: none;">
+            <input type="hidden" name="id">
+            <input type="text" name="name" placeholder="Name" required>
+            <input type="text" name="description" placeholder="Description" required>
+            <button type="submit">Update</button>
+        </form>
+    </section>
+</body>
+</html>
