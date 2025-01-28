@@ -52,6 +52,64 @@
         th {
             background-color: #f4f4f4;
         }
+
+        /* modal create  */
+        /* Modal overlay background */
+        .overlay-modal {
+            display: none; /* Hidden by default */
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.6); /* Dimmed background */
+            z-index: 9999; /* Ensure it appears above everything else */
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* Modal content container */
+        .modal-content {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            width: 400px;
+            text-align: center;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+        }
+
+        /* Close button */
+        .close-btn {
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            font-size: 18px;
+            font-weight: bold;
+            color: #333;
+            cursor: pointer;
+        }
+
+        /* Input fields and button styling */
+        #itemName, #itemDescription {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
     </style>
 </head>
 <body>
@@ -66,7 +124,7 @@
             <a href="/playground" class="w3-button w3-block w3-black">PLAYGROUND</a>
         </div>
         <div class="w3-col s3">
-            <a href="/script_list" class="w3-button w3-block w3-black">SCRIPT</a>
+            <a href="/script_list" class="w3-button w3-block w3-black">SCRIPT AND TEST CASE</a>
         </div>
     </div>
 </div>
@@ -76,8 +134,31 @@
     <h1 style="text-align: center;">Items List</h1> <!-- Centered heading -->
 
     <div class="content-wrapper">
+
         <div class="create-button-container">
-            <a href="" class="w3-button w3-dark-grey">Create data</a>
+            <button class="w3-button w3-dark-grey" onclick="openModalCreate()">Create Data</button>
+        </div>   
+
+        <!-- modal create  -->
+        <div id="overlayModalCreate" class="overlay-modal">
+            <div class="modal-content">
+                <h2>Create New Item</h2>
+                <input type="text" id="itemName" placeholder="Item Name" required>
+                <input type="text" id="itemDescription" placeholder="Item Description" required>
+                <button id="createSubmitBtn" onclick="submitItemCreate()">Submit</button>
+                <button id="createCloseModalBtn" onclick="closeModalCreate()">Close</button>
+            </div>
+        </div>
+        
+        <div id="overlayModalUpdate" class="overlay-modal">
+            <div class="modal-content">
+                <h2>Update Item</h2>
+                <input type="hidden" id="updateItemId">
+                <input type="text" id="updateItemName" placeholder="Item Name" style="width: 100%; padding: 10px; margin: 10px 0; border: 1px solid #ddd; border-radius: 4px;" required>
+                <input type="text" id="updateItemDescription" placeholder="Item Description" style="width: 100%; padding: 10px; margin: 10px 0; border: 1px solid #ddd; border-radius: 4px;" required>
+                <button id="updateSubmitBtn" onclick="submitItemUpdate()">Submit</button>
+                <button id="updateCloseModalBtn" onclick="closeModalUpdate()">Close</button>
+            </div>
         </div>
         <div class="table-content">
             <table>
@@ -97,14 +178,35 @@
                         <td>{{ item.description }}</td>
                         <td>
                             <a href="/item/{{ item.id }}" class="w3-button w3-blue">Detail</a> <!-- View details -->
-                            <a href="/update_item/{{ item.id }}" class="w3-button w3-green">Update</a> <!-- Update item -->
+                            <!-- <a href="/update_item/{{ item.id }}" class="w3-button w3-green">Update</a> -->
+                            <button onclick="openModalUpdate('{{ item.id }}')" class="w3-button w3-green">Update</button>
                             <!-- <a href="/delete_item/{{ item.id }}" class="w3-button w3-red" onclick="return confirm('Are you sure?');">Delete</a> Delete item -->
                             <button onclick="deleteItem('{{ item.id }}')" class="w3-button w3-red">Delete</button>
                         </td>
+                        {% endfor %}
+                    </tr>
+                    {% for _ in range(empty_rows) %}
+                    <tr class="empty-row">
+                        <!-- <td colspan="3">&nbsp;</td> -->
+                        <td>&nbsp;</td>
+                        <td>&nbsp;</td>
+                        <td>&nbsp;</td>
+                        <td>&nbsp;</td>
                     </tr>
                     {% endfor %}
                 </tbody>
             </table>
+        </div>
+        <div>
+            {% if page > 1 %}
+            <a href="{{ url_for('list_items', page=page-1) }}">Previous</a>
+            {% endif %}
+    
+            Page {{ page }} of {{ total_pages }}
+    
+            {% if page < total_pages %}
+            <a href="{{ url_for('list_items', page=page+1) }}">Next</a>
+            {% endif %}
         </div>
         <h6>Endpoint List</h6>
         <div class="w3-panel w3-leftbar w3-light-grey">
@@ -120,7 +222,6 @@
             <p><i>id</i></p>
         </div>
     </div>
-
 </div>
 
 <!-- End page content -->
@@ -151,15 +252,171 @@
         })
         .then(response => {
             if (response.ok) {
-                alert('Item deleted successfully');
+                // alert('Item deleted successfully');
                 window.location.reload(); // Reload page after successful delete
             } else {
                 alert('Failed to delete the item');
             }
         })
         .catch(error => console.error('Error:', error));
+        }
     }
-}
+
+    // Open modal
+    function openModalCreate() {
+        const overlayModal = document.getElementById("overlayModalCreate");
+        overlayModal.style.display = "flex";
+    }
+
+    // Close modal
+    function closeModalCreate() {
+        const overlayModal = document.getElementById("overlayModalCreate");
+        overlayModal.style.display = "none";
+    }
+
+    // Submit data
+    async function submitItemCreate() {
+        // Get input values
+        const itemName = document.getElementById("itemName").value.trim();
+        const itemDescription = document.getElementById("itemDescription").value.trim();
+
+        // Validate inputs
+        if (!itemName || !itemDescription) {
+            alert("Both Item Name and Description are required.");
+            return;
+        }
+
+        // Prepare data for submission
+        const data = {
+            name: itemName,
+            description: itemDescription,
+        };
+
+        try {
+            // Send POST request
+            const response = await fetch("/create_item", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify(data),
+            });
+
+            if (response.ok) {
+                // Refresh the page after successfully adding the item
+                window.location.reload();
+            } else {
+                const result = await response.json();
+                alert(result.error || "Failed to create item.");
+            }
+        } catch (error) {
+            console.error("Error:", error);
+            alert("An unexpected error occurred.");
+        }
+    }
+
+    async function openModalUpdate(itemId) {
+        try {
+        // Fetch the item details from the server
+            const response = await fetch(`/item/${itemId}`, {
+                method: "GET",
+            });
+
+            if (response.ok) {
+                const result = await response.json();
+                const item = result.item; // Access the "item" key in the response
+
+                // Populate the modal fields with the item details
+                document.getElementById("updateItemId").value = item.id; // Hidden field for item ID
+                document.getElementById("updateItemName").value = item.name;
+                document.getElementById("updateItemDescription").value = item.description;
+
+                // Show the overlay modal
+                const overlayModal = document.getElementById("overlayModalUpdate");
+                overlayModal.style.display = "flex";
+            } else {
+                const error = await response.json();
+                alert(error.error || "Failed to fetch item details.");
+            }
+        } catch (error) {
+            console.error("Error fetching item details:", error);
+            alert("An unexpected error occurred.");
+        }
+    //     const overlayModal = document.getElementById("overlayModalUpdate");
+    //     overlayModal.style.display = "flex";
+
+    //     try {
+    //         // Fetch the item details from the server
+    //         const response = await fetch(`/item/${itemId}`, {
+    //             method: "GET",
+    //         });
+
+    //         if (response.ok) {
+    //             const item = await response.json();
+
+    //             // Populate the modal fields with the item details
+    //             document.getElementById("updateItemId").value = item.id; // Hidden field for item ID
+    //             document.getElementById("updateItemName").value = item.name;
+    //             document.getElementById("updateItemDescription").value = item.description;
+
+    //             // Show the overlay modal
+    //             const overlayModal = document.getElementById("overlayModalUpdate");
+    //             overlayModal.style.display = "flex";
+    //         } else {
+    //             alert("Failed to fetch item details.");
+    //         }
+    //     } catch (error) {
+    //         console.error("Error fetching item details:", error);
+    //         alert("An unexpected error occurred.");
+    //     }
+    }
+
+    // Close modal
+    function closeModalUpdate() {
+        const overlayModal = document.getElementById("overlayModalUpdate");
+        overlayModal.style.display = "none";
+        }
+
+        async function submitItemUpdate() {
+        // Get input values
+        const itemId = document.getElementById("updateItemId").value; // Hidden field
+        const itemName = document.getElementById("updateItemName").value.trim();
+        const itemDescription = document.getElementById("updateItemDescription").value.trim();
+
+        // Validate inputs
+        if (!itemName || !itemDescription) {
+            alert("Both Item Name and Description are required.");
+            return;
+        }
+
+        // Prepare data for submission
+        const data = {
+            name: itemName,
+            description: itemDescription,
+        };
+
+        try {
+            // Send PUT request
+            const response = await fetch(`/update_item/${itemId}`, {
+                method: "PUT",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify(data),
+            });
+
+            if (response.ok) {
+                // Refresh the page after successfully updating the item
+                window.location.reload();
+            } else {
+                const result = await response.json();
+                alert(result.error || "Failed to update item.");
+            }
+        } catch (error) {
+            console.error("Error:", error);
+            alert("An unexpected error occurred.");
+        }
+    }
 
 </script>
 
