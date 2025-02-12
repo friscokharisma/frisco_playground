@@ -56,22 +56,8 @@
 </head>
 <body>
 
-<!-- Navigation Links -->
-<div class="w3-top">
-    <div class="w3-row w3-padding w3-black">
-        <div class="w3-col s3">
-            <a href="/" class="w3-button w3-block w3-black">HOME</a>
-        </div>
-        <div class="w3-col s3">
-            <a href="/playground" class="w3-button w3-block w3-black">PLAYGROUND</a>
-        </div>
-        <div class="w3-col s3">
-            <a href="/script_list" class="w3-button w3-block w3-black">SCRIPT AND TEST CASE</a>
-        </div>
-    </div>
-</div>
+{% include 'navigation.html' %}
 
-<!-- Main Content -->
 <div class="w3-container">
     <h1 style="text-align: center;">Script and Test Case List</h1> <!-- Centered heading -->
 
@@ -99,7 +85,6 @@
 
 </div>
 
-<!-- End page content -->
 <script>
     // Tabbed Menu (if needed)
     function openMenu(evt, menuName) {

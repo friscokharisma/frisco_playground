@@ -89,8 +89,25 @@
             cursor: pointer;
         }
 
+        .custom-button {
+            display: inline-block;
+            padding: 10px 20px;
+            background-color: #616161; /* Dark Grey */
+            color: white;
+            text-align: center;
+            text-decoration: none;
+            border: none;
+            border-radius: 5px; /* Rounded corners */
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .custom-button:hover {
+            background-color: #444; /* Darker Grey on Hover */
+        }
+
         /* Input fields and button styling */
-        #itemName, #itemDescription {
+        #itemName, #itemDescription, #itemPrice {
             width: 100%;
             padding: 10px;
             margin: 10px 0;
@@ -114,29 +131,17 @@
 </head>
 <body>
 
-<!-- Navigation Links -->
-<div class="w3-top">
-    <div class="w3-row w3-padding w3-black">
-        <div class="w3-col s3">
-            <a href="/" class="w3-button w3-block w3-black">HOME</a>
-        </div>
-        <div class="w3-col s3">
-            <a href="/playground" class="w3-button w3-block w3-black">PLAYGROUND</a>
-        </div>
-        <div class="w3-col s3">
-            <a href="/script_list" class="w3-button w3-block w3-black">SCRIPT AND TEST CASE</a>
-        </div>
-    </div>
-</div>
+{% include 'navigation.html' %}
 
-<!-- Main Content -->
 <div class="w3-container">
     <h1 style="text-align: center;">Items List</h1> <!-- Centered heading -->
 
     <div class="content-wrapper">
 
         <div class="create-button-container">
-            <button class="w3-button w3-dark-grey" onclick="openModalCreate()">Create Data</button>
+            <button class="custom-button" onclick="openModalCreate()">Create Data</button>
+            <!-- Temporary -->
+            <a href="/store" class="custom-button" style="margin-left: 5px;">Store</a>
         </div>   
 
         <!-- modal create  -->
@@ -145,6 +150,7 @@
                 <h2>Create New Item</h2>
                 <input type="text" id="itemName" placeholder="Item Name" required>
                 <input type="text" id="itemDescription" placeholder="Item Description" required>
+                <input type="text" id="itemPrice" placeholder="Item Price" required>
                 <button id="createSubmitBtn" onclick="submitItemCreate()">Submit</button>
                 <button id="createCloseModalBtn" onclick="closeModalCreate()">Close</button>
             </div>
@@ -156,6 +162,7 @@
                 <input type="hidden" id="updateItemId">
                 <input type="text" id="updateItemName" placeholder="Item Name" style="width: 100%; padding: 10px; margin: 10px 0; border: 1px solid #ddd; border-radius: 4px;" required>
                 <input type="text" id="updateItemDescription" placeholder="Item Description" style="width: 100%; padding: 10px; margin: 10px 0; border: 1px solid #ddd; border-radius: 4px;" required>
+                <input type="text" id="updateItemPrice" placeholder="Item Price" style="width: 100%; padding: 10px; margin: 10px 0; border: 1px solid #ddd; border-radius: 4px;" required>
                 <button id="updateSubmitBtn" onclick="submitItemUpdate()">Submit</button>
                 <button id="updateCloseModalBtn" onclick="closeModalUpdate()">Close</button>
             </div>
@@ -167,6 +174,7 @@
                         <th>ID</th>
                         <th>Name</th>
                         <th>Description</th>
+                        <th>Price</th>
                         <th>Action</th>
                     </tr>
                 </thead>
@@ -176,6 +184,7 @@
                         <td>{{ item.id }}</td>
                         <td>{{ item.name }}</td>
                         <td>{{ item.description }}</td>
+                        <td>{{ item.price }}</td>
                         <td>
                             <a href="/item/{{ item.id }}" class="w3-button w3-blue">Detail</a> <!-- View details -->
                             <!-- <a href="/update_item/{{ item.id }}" class="w3-button w3-green">Update</a> -->
@@ -188,6 +197,7 @@
                     {% for _ in range(empty_rows) %}
                     <tr class="empty-row">
                         <!-- <td colspan="3">&nbsp;</td> -->
+                        <td>&nbsp;</td>
                         <td>&nbsp;</td>
                         <td>&nbsp;</td>
                         <td>&nbsp;</td>
@@ -215,7 +225,7 @@
             <p>Get detail item : /item/:id</p>
             <p><i>id</i></p>
             <p>Create item : /create_item</p>
-            <p><i>{"name": "Testing", "description": "Testing"}</i></p>
+            <p><i>{"name": "Testing", "description": "Testing", "price": 43.1}</i></p>
             <p>Update item : /update_item/:id</p>
             <p><i>id<br>{"name": "Testing", "description": "Testing"}</i></p>
             <p>Delete item : /delete_item/:id</p>
@@ -224,7 +234,6 @@
     </div>
 </div>
 
-<!-- End page content -->
 <script>
     // Tabbed Menu (if needed)
     function openMenu(evt, menuName) {
@@ -279,10 +288,11 @@
         // Get input values
         const itemName = document.getElementById("itemName").value.trim();
         const itemDescription = document.getElementById("itemDescription").value.trim();
+        const itemPrice = document.getElementById("itemPrice").value.trim();
 
         // Validate inputs
-        if (!itemName || !itemDescription) {
-            alert("Both Item Name and Description are required.");
+        if (!itemName || !itemDescription || !itemPrice) {
+            alert("Item Name, Description, and Price are required.");
             return;
         }
 
@@ -290,6 +300,7 @@
         const data = {
             name: itemName,
             description: itemDescription,
+            price: itemPrice,
         };
 
         try {
@@ -330,6 +341,7 @@
                 document.getElementById("updateItemId").value = item.id; // Hidden field for item ID
                 document.getElementById("updateItemName").value = item.name;
                 document.getElementById("updateItemDescription").value = item.description;
+                document.getElementById("updateItemPrice").value = item.price;
 
                 // Show the overlay modal
                 const overlayModal = document.getElementById("overlayModalUpdate");
@@ -382,10 +394,11 @@
         const itemId = document.getElementById("updateItemId").value; // Hidden field
         const itemName = document.getElementById("updateItemName").value.trim();
         const itemDescription = document.getElementById("updateItemDescription").value.trim();
+        const itemPrice = document.getElementById("updateItemPrice").value.trim();
 
         // Validate inputs
-        if (!itemName || !itemDescription) {
-            alert("Both Item Name and Description are required.");
+        if (!itemName || !itemDescription || !itemPrice) {
+            alert("Item Name, Description, and Price are required.");
             return;
         }
 
@@ -393,6 +406,7 @@
         const data = {
             name: itemName,
             description: itemDescription,
+            price: itemPrice,
         };
 
         try {

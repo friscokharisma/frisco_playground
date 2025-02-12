@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Frisco Playground</title>
+    <link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Inconsolata">
+    <style>
+        html {
+            height: 100%;
+            font-family: "Inconsolata", sans-serif;
+        }
+        
+        body {
+            padding-top: 50px; /*fixing issue h1 item list not visible*/
+            height: 100%;
+            font-family: "Inconsolata", sans-serif;
+        }
+
+        .content-wrapper {
+            width: 80%;
+            margin: 0 auto;
+            margin-top: 50px;
+        }
+
+        .cart-container {
+            max-width: 800px;
+            margin: auto;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+        }
+        .cart-item {
+            display: flex;
+            align-items: center;
+            padding: 10px;
+            border-bottom: 1px solid #ddd;
+        }
+        .cart-item img {
+            width: 80px;
+            height: 80px;
+            object-fit: cover;
+            border-radius: 5px;
+            margin-right: 15px;
+        }
+        .cart-item-details {
+            flex-grow: 1;
+        }
+        .cart-item h3 {
+            margin: 0;
+            font-size: 18px;
+        }
+        .cart-item p {
+            margin: 5px 0;
+            color: #555;
+        }
+        .remove-btn {
+            background: red;
+            color: white;
+            padding: 5px 10px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .remove-btn:hover {
+            background: darkred;
+        }
+        .total {
+            font-size: 18px;
+            font-weight: bold;
+            text-align: right;
+            margin-top: 10px;
+        }
+        .checkout-btn {
+            display: block;
+            text-align: center;
+            background: green;
+            color: white;
+            padding: 10px;
+            margin-top: 20px;
+            border-radius: 5px;
+            text-decoration: none;
+        }
+        .checkout-btn:hover {
+            background: darkgreen;
+        }
+
+        .custom-button {
+            margin-top: 20px;
+            display: block;
+            padding: 10px 20px;
+            background-color: #616161; /* Dark Grey */
+            color: white;
+            text-align: center;
+            text-decoration: none;
+            border: none;
+            border-radius: 5px; /* Rounded corners */
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .custom-button:hover {
+            background-color: #444; /* Darker Grey on Hover */
+        }
+
+        .success-text {
+            color: green;
+        }
+
+        .error-text {
+            color: red;
+        }
+
+        .flash-modal {
+            display: none;
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            justify-content: center;
+            align-items: center;
+        }
+
+        .flash-modal-content {
+            background: white;
+            padding: 20px;
+            border-radius: 5px;
+            text-align: center;
+        }
+
+        .close-btn {
+            cursor: pointer;
+            font-size: 20px;
+            position: absolute;
+            top: 10px;
+            right: 20px;
+        }
+    </style>
+</head>
+<body>
+
+{% include 'navigation.html' %}
+
+<div class="w3-container">
+    <h1 style="text-align: center;">Your Cart</h1> <!-- Centered heading -->
+
+    <div class="content-wrapper">
+        
+    {% with messages = get_flashed_messages(with_categories=True) %}
+    {% if messages %}
+        {% for category, message in messages %}
+            <p class="{% if category == 'success' %}success-text{% else %}error-text{% endif %}">
+                {{ message }}
+            </p>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <!-- <div id="flashModal" class="flash-modal" style="display: none;">
+        <div class="flash-modal-content">
+            <span class="close-btn" onclick="closeModal()">&times;</span>
+            <p id="flashMessageText"></p>
+        </div>
+    </div> -->
+
+    {% if cart_items %}
+    {% for item in cart_items %}
+        <div class="cart-item">
+            <img src="https://www.generationsforpeace.org/wp-content/uploads/2018/03/empty.jpg" alt="{{ item.product.name }}">
+            <div class="cart-item-details">
+                <h3>{{ item.product.name }}</h3>
+                <p>Price: Rp.{{ item.product.price }}</p>
+                <p>Quantity: {{ item.quantity }}</p>
+            </div>
+            <a href="{{ url_for('remove_from_cart', item_id=item.id) }}">
+                <button class="remove-btn">Remove</button>
+            </a>
+        </div>
+        {% endfor %}
+        
+        <p class="total">Total: Rp.{{ total }}</p>
+        <a href="{{ url_for('checkout') }}" class="checkout-btn">Proceed to Checkout</a>
+    {% else %}
+        <p style="text-align: center;">Your cart is empty</p>
+    {% endif %}
+    
+    <a href="{{ url_for('store') }}" class="custom-button">Continue Shopping</a>
+
+    </div>
+</div>
+
+<script>
+    // function closeModal() {
+    //     document.getElementById("flashModal").style.display = "none";
+    // }
+
+    // document.addEventListener("DOMContentLoaded", function () {
+    //     let flashMessages = JSON.parse('{{ get_flashed_messages(with_categories=True) | tojson | safe }}');
+
+    //     if (flashMessages.length > 0) {
+    //         let messageText = flashMessages.map(msg => msg[1]).join("\n"); // Extract messages
+    //         document.getElementById("flashMessageText").innerText = messageText;
+    //         document.getElementById("flashModal").style.display = "flex"; // Show modal
+    //     }
+    // });
+</script>
+
+</body>
+</html>

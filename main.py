@@ -1,20 +1,33 @@
-from flask import Flask, request, jsonify, render_template, redirect
+from flask import Flask, request, jsonify, render_template, redirect, flash, url_for
 from flask_sqlalchemy import SQLAlchemy
 import re
 # from flask_cors import CORS
+from sqlalchemy import text
 
 app = Flask(__name__)
+app.secret_key = 'supersecretkey'
 # CORS(app)
+
+# db = SQLAlchemy(app)
 
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///items.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
+# db.init_app(app)
 db = SQLAlchemy(app)
 
 class Item(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False)
     description = db.Column(db.String(200), nullable=True)
+    price = db.Column(db.Float, nullable=False, default=0.0)
+
+class CartItem(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, nullable=False)
+    product_id = db.Column(db.Integer, db.ForeignKey('item.id'), nullable=False)
+    quantity = db.Column(db.Integer, default=1)
+    product = db.relationship('Item', backref='cart_item')
 
 with app.app_context():
     db.create_all()
@@ -33,7 +46,7 @@ def playground():
     try:
         items = Item.query.all()
 
-        items_list = [{"id": item.id, "name": item.name, "description": item.description} for item in items]
+        items_list = [{"id": item.id, "name": item.name, "description": item.description, "price": item.price} for item in items]
 
         # # return jsonify({"items": items_list}), 200
         # return render_template('playground_index.html', items=items_list)
@@ -74,6 +87,64 @@ def script_list():
 def test_case():
     return render_template('test_case.html')
 
+# --------------------------------------------- isolation on progress ---------------------------------------------
+@app.route('/store') #index of store page
+def store():
+    items = Item.query.all()
+
+    return render_template('store.html', items=items)
+
+@app.route('/cart')
+def cart():
+    user_id = 1
+    cart_items = CartItem.query.filter_by(user_id=user_id).all()
+
+    # if not cart_items:
+    #     flash("Your cart is empty!", "info")
+    # flash("Item added to cart!", "success")
+
+    total = sum(item.product.price * item.quantity for item in cart_items)
+    
+    return render_template('cart.html', cart_items=cart_items, total=total)
+
+@app.route('/add_to_cart/<int:item_id>')
+def add_to_cart(item_id):
+    user_id = 1
+    product = Item.query.get(item_id)
+
+    if product:
+        cart_item = CartItem.query.filter_by(user_id=user_id, product_id=item_id).first()
+        if cart_item:
+            cart_item.quantity += 1  # Increase quantity if already in cart
+        else:
+            new_cart_item = CartItem(user_id=user_id, product_id=item_id, quantity=1)
+            db.session.add(new_cart_item)
+
+        db.session.commit()
+        flash("Item added to cart!", "success")
+
+    return redirect(url_for('cart'))
+
+@app.route('/remove/<int:item_id>')
+def remove_from_cart(item_id):
+    user_id = 1
+    cart_item = CartItem.query.filter_by(user_id=user_id, product_id=item_id).first()
+
+    if cart_item:
+        db.session.delete(cart_item)
+        db.session.commit()
+        flash("Item removed from cart!", "info")
+    return redirect(url_for('cart'))
+
+@app.route('/checkout')
+def checkout():
+    user_id = 1
+    CartItem.query.filter_by(user_id=user_id).delete()  # Clear cart
+    db.session.commit()
+    flash("Checkout successful!", "success")
+    return redirect(url_for('cart'))
+
+
 # -------------------- endpoint --------------------
 
 @app.route('/items', methods=['GET'])
@@ -81,7 +152,7 @@ def get_items():
     try:
         items = Item.query.all()
 
-        items_list = [{"id": item.id, "name": item.name, "description": item.description} for item in items]
+        items_list = [{"id": item.id, "name": item.name, "description": item.description, "price": item.price} for item in items]
 
         return jsonify({"items": items_list}), 200
         # return render_template('playground_index.html', items=items_list)
@@ -100,7 +171,8 @@ def get_item(item_id):
         item_details = {
             "id": item.id,
             "name": item.name,
-            "description": item.description
+            "description": item.description,
+            "price": item.price
         }
 
         return jsonify({"item": item_details}), 200
@@ -114,6 +186,7 @@ def create_item():
         data = request.get_json()
         name = data.get('name')
         description = data.get('description')
+        price = data.get('price')
 
         if not name:
             return jsonify({"error": "Create item : Name is required"}), 422
@@ -143,11 +216,11 @@ def create_item():
         if len(description) > 100:
             return jsonify({"error": "Create item : Description must not exceed 100 characters long"}), 422
 
-        new_item = Item(name=name, description=description)
+        new_item = Item(name=name, description=description, price=price)
         db.session.add(new_item)
         db.session.commit()
 
-        return jsonify({"message": "Item created", "item": {"id": new_item.id, "name": new_item.name, "description": new_item.description}}), 201
+        return jsonify({"message": "Item created", "item": {"id": new_item.id, "name": new_item.name, "description": new_item.description, "price": new_item.price}}), 201
     
     except Exception as e:
         return jsonify({"error": str(e)}), 500
@@ -164,15 +237,16 @@ def update_item(item_id):
         
         name = data.get('name')
         description = data.get('description')
+        price = data.get('price')
 
-        
         if not name:
             return jsonify({"error": "Name is required"}), 422
         
         if not re.match(r"^[a-zA-Z0-9\s]+$", name):
             return jsonify({"error": "Name must contain only letters, numbers and spaces"}), 422
         
-        existing_item = Item.query.filter_by(name=name).first()
+        # existing_item = Item.query.filter_by(name=name).first()
+        existing_item = Item.query.filter(Item.name == name, Item.id != item.id).first()
         if existing_item:
             return jsonify({"error": f"An item with the name '{name}' already exist"}), 422
         
@@ -198,6 +272,8 @@ def update_item(item_id):
             item.name = name
         if description:
             item.description = description
+        if price:
+            item.price = price
 
         db.session.commit()
 
@@ -205,6 +281,7 @@ def update_item(item_id):
             "id": item.id,
             "name": item.name,
             "description": item.description,
+            "price": item.price,
         }
 
         return jsonify({"message": "Item updated", "item": update_item}), 200
